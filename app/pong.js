@@ -6,21 +6,48 @@
 pong = function () {
     'use strict';
     // Main Variables for the game //
-    var gameWidth = 700, gameHeight = 600, pi = Math.PI,
+    var gameWidth, gameHeight, pi = Math.PI,
         canvas = null,
         canvasCtx = null,
         keyState = null,
-        human = {}, computer = {}, ball = {},
+        human = {}, computer = {}, ball = {}, scoreHuman = {}, scoreComputer = {},
         upArrow = 38, downArrow = 40, escapeKey = 27, enterKey = 13,
         animateRequest;
+
+    // object to handle scoring //
+    scoreHuman = {
+        x: null,
+        y: null,
+        score: 0,
+
+        draw: function () {
+            canvasCtx.font = "36px sans-serif";
+            canvasCtx.fillText(this.score, this.x, this.y);
+        }
+
+    };
+
+    // object to handle scoring //
+    scoreComputer = {
+        x: null,
+        y: null,
+        score: 0,
+
+        draw: function () {
+            canvasCtx.font = "36px sans-serif";
+            canvasCtx.fillText(this.score, this.x, this.y);
+        }
+
+    };
 
     // define the game objects //
     human = {
         // location coordinates //
         x: null,
         y: null,
+        score: 0,
 
-        // size of the object
+        // size of the paddle
         width: 20,
         height: 100,
 
@@ -48,8 +75,9 @@ pong = function () {
     computer = {
         x: null,
         y: null,
+        score: 0,
 
-        // size of the object
+        // size of the paddle
         width: 20,
         height: 100,
 
@@ -127,9 +155,24 @@ pong = function () {
                 this.velocity.y = smash * this.speed*Math.sin(phi);
             }
 
-            // reset the game if someone misses the ball //
-            if (this.x + this.side < 0 || this.x > gameWidth) {
-                this.serve (paddle === human ? 1 : -1);
+            // computer gets the point - wins at 11 //
+            if (this.x + this.side < 0) {
+                scoreComputer.score = scoreComputer.score + 1;
+                if (scoreComputer.score === 11) {
+                    scoreComputer.score = 0;
+                    scoreHuman.score = 0;
+                }
+                this.serve(-1);
+            }
+
+            // human gets the point - wins at 11 //
+            if (this.x > gameWidth) {
+                scoreHuman.score = scoreHuman.score + 1;
+                if (scoreHuman.score === 11) {
+                    scoreComputer.score = 0;
+                    scoreHuman.score = 0;
+                }
+                this.serve(1);
             }
         },
 
@@ -146,13 +189,19 @@ pong = function () {
         computer.x = gameWidth - (computer.width + human.width);
         computer.y = (gameHeight - human.height)/2;
 
+        scoreHuman.x = gameWidth * 0.4;
+        scoreHuman.y = 35;
+
+        scoreComputer.x = gameWidth * 0.57;
+        scoreComputer.y = 35;
+
         ball.serve(1);  // always start with the human //
     }
 
     function draw() {
         // 1. Draw the court in black //
         canvasCtx.fillRect(0, 0, gameWidth, gameHeight);
-        canvasCtx.fillStyle = "#00f";  // color of the court
+        canvasCtx.fillStyle = "#2d8152";  // color of the court
 
         // 2. save current canvas //
         canvasCtx.save();
@@ -164,6 +213,8 @@ pong = function () {
         ball.draw();
         human.draw();
         computer.draw();
+        scoreHuman.draw();
+        scoreComputer.draw();
 
         // 5. draw the net //
         var netWidth = 4,
@@ -187,14 +238,13 @@ pong = function () {
     }
 
     function main() {
-        // initialize the game court on the canvas //
-        canvas = document.createElement('canvas');
-        canvas.width = gameWidth;
-        canvas.height = gameHeight;
+        // game court on the canvas //
+        canvas = document.getElementById("game");
+        gameWidth = canvas.width;
+        gameHeight = canvas.height;
 
         // get the 2d canvas context so we can draw on it //
         canvasCtx = canvas.getContext('2d');
-        document.body.appendChild(canvas);
 
         // listen for keydown and keyup events to move the human paddle
         keyState = [];
@@ -212,7 +262,6 @@ pong = function () {
         var loop = function () {
             update();
             draw();
-
 
             animateRequest = window.requestAnimationFrame(loop);
 
