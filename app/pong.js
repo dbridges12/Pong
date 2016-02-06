@@ -10,9 +10,9 @@ pong = function () {
         canvas = null,
         canvasCtx = null,
         keyState = null,
-        human = {}, computer = {}, ball = {}, scoreHuman = {}, scoreComputer = {},
+        human = {}, computer = {}, ball = {}, scoreHuman = {}, scoreComputer = {}, gameMessage = {}, gameMessage2 = {},
         upArrow = 38, downArrow = 40, escapeKey = 27, enterKey = 13,
-        animateRequest;
+        animateRequest, gameOver = false;
 
     // object to handle scoring //
     scoreHuman = {
@@ -38,6 +38,28 @@ pong = function () {
             canvasCtx.fillText(this.score, this.x, this.y);
         }
 
+    };
+
+    gameMessage = {
+        x: null,
+        y: null,
+        message: '',
+
+        draw: function () {
+            canvasCtx.font = "36px sans-serif";
+            canvasCtx.fillText(this.message, this.x, this.y);
+        }
+    };
+
+    gameMessage2 = {
+        x: null,
+        y: null,
+        message: '',
+
+        draw: function () {
+            canvasCtx.font = "24px sans-serif";
+            canvasCtx.fillText(this.message, this.x, this.y);
+        }
     };
 
     // define the game objects //
@@ -159,8 +181,9 @@ pong = function () {
             if (this.x + this.side < 0) {
                 scoreComputer.score = scoreComputer.score + 1;
                 if (scoreComputer.score === 11) {
-                    scoreComputer.score = 0;
-                    scoreHuman.score = 0;
+                    gameMessage.message = 'Computer Wins! AI Rules!';
+                    gameMessage2.message = 'Press Enter to Start a New game.';
+                    gameOver = true;
                 }
                 this.serve(-1);
             }
@@ -169,8 +192,9 @@ pong = function () {
             if (this.x > gameWidth) {
                 scoreHuman.score = scoreHuman.score + 1;
                 if (scoreHuman.score === 11) {
-                    scoreComputer.score = 0;
-                    scoreHuman.score = 0;
+                    gameMessage.message = 'Human Wins! Go Carbon Units!';
+                    gameMessage2.message = 'Press Enter to Start a New game.';
+                    gameOver = true;
                 }
                 this.serve(1);
             }
@@ -195,6 +219,12 @@ pong = function () {
         scoreComputer.x = gameWidth * 0.57;
         scoreComputer.y = 35;
 
+        gameMessage.x = gameWidth * 0.25;
+        gameMessage.y = gameHeight * 0.5;
+
+        gameMessage2.x = gameWidth * 0.3;
+        gameMessage2.y = gameHeight * 0.55;
+
         ball.serve(1);  // always start with the human //
     }
 
@@ -215,6 +245,8 @@ pong = function () {
         computer.draw();
         scoreHuman.draw();
         scoreComputer.draw();
+        gameMessage.draw();
+        gameMessage2.draw();
 
         // 5. draw the net //
         var netWidth = 4,
@@ -232,6 +264,10 @@ pong = function () {
     }
 
     function update() {
+        if (gameOver) {
+            return;
+        }
+
         ball.update();
         human.update();
         computer.update();
@@ -266,7 +302,17 @@ pong = function () {
             animateRequest = window.requestAnimationFrame(loop);
 
             if (keyState[escapeKey]) {
-                window.cancelAnimationFrame(animateRequest);
+                gameOver = true;
+            }
+
+            if (keyState[enterKey]) {
+                gameOver = false;
+                if (scoreHuman.score >= 11 || scoreComputer.score >= 11) {
+                    scoreHuman.score = 0;
+                    scoreComputer.score = 0;
+                    gameMessage.message = '';
+                    gameMessage2.message = '';
+                }
             }
         };
 
